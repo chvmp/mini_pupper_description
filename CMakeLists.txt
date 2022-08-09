@@ -1,11 +1,10 @@
+cmake_minimum_required(VERSION 3.5)
+project(mini_pupper_description)
 
-cmake_minimum_required(VERSION 2.8.3)
-project(mini-pupper_description)
+find_package(ament_cmake REQUIRED COMPONENTS)
 
-find_package(catkin REQUIRED COMPONENTS)
+ament_package()
 
-catkin_package()
-
-install(DIRECTORY meshes launch urdf rviz
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+install(DIRECTORY meshes launch urdf rviz config
+  DESTINATION share/${PROJECT_NAME}
 )

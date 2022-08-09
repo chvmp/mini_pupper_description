@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot name="mini-pupper" xmlns:xacro="http://ros.org/wiki/xacro">
-    <xacro:include filename="$(find mini-pupper_description)/urdf/properties.urdf.xacro" />
+    <xacro:include filename="$(find mini_pupper_description)/urdf/properties.urdf.xacro" />
 
     <material name="black"><color rgba="0.15 0.15 0.15 1.0" /></material>
     <material name="dyellow"><color rgba="0.95 0.93 0.13 1.0" /></material>
@@ -16,7 +16,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://mini-pupper_description/meshes/base.stl" scale="1 1 1" />
+                <mesh filename="file://$(find mini_pupper_description)/meshes/base.stl" scale="1 1 1" />
             </geometry>
             <material name="dyellow" />
         </visual>
@@ -112,9 +112,9 @@
         <material>Gazebo/White</material>
     </gazebo> -->
 
-    <xacro:include filename="$(find mini-pupper_description)/urdf/leg.urdf.xacro" />
+    <xacro:include filename="$(find mini_pupper_description)/urdf/leg.urdf.xacro" />
 
-    <xacro:include filename="$(find mini-pupper_description)/urdf/accessories.urdf.xacro" />
+    <xacro:include filename="$(find mini_pupper_description)/urdf/accessories.urdf.xacro" />
 
     <xacro:accessories
         base_name="base_link"
@@ -141,8 +141,8 @@
     </gazebo>
 
     <gazebo>
-        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-            <legacyModeNS>true</legacyModeNS>
-        </plugin>
+        <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+        <parameters>$(find mini_pupper_description)/config/ros_control.yaml</parameters>
+      </plugin>
     </gazebo>
 </robot>

@@ -17,13 +17,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/base.stl" scale="0.001 0.001 0.001"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/base.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/base.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/base.stl" scale="1 1 1"/>
       </geometry>
       <material name="dyellow"/>
     </visual>
@@ -115,7 +115,7 @@
         <material>Gazebo/White</material>
     </gazebo> -->
   <joint name="hokuyo_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="-0.05 0.0 0.1"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.07500000000000001"/>
     <parent link="base_link"/>
     <child link="hokuyo_frame"/>
   </joint>
@@ -128,7 +128,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hector_sensors_description/meshes/hokuyo_utm30lx/hokuyo_utm_30lx.dae"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/champ_description/share/champ_description/meshes/hokuyo_utm_30lx.dae"/>
       </geometry>
     </visual>
     <collision>
@@ -165,14 +165,20 @@
           <stddev>0.004</stddev>
         </noise>
       </ray>
-      <plugin filename="libgazebo_ros_laser.so" name="gazebo_ros_hokuyo_controller">
-        <topicName>scan</topicName>
-        <frameName>hokuyo_frame</frameName>
+      <plugin filename="libgazebo_ros_ray_sensor.so" name="gazebo_ros_hokuyo_controller">
+        <ros>
+          <argument>~/out:=scan</argument>
+        </ros>
+        <!-- Set output to sensor_msgs/PointCloud to get same output type as gazebo_ros_block_laser -->
+        <output_type>sensor_msgs/LaserScan</output_type>
+        <!-- <frame_name> ommited, will default to block_laser_link -->
+        <!-- min_intensity instead of hokuyoMinIntensity -->
+        <min_intensity>100.0</min_intensity>
       </plugin>
     </sensor>
   </gazebo>
   <joint name="camera_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="0.098 0.0 0.082"/>
+    <origin rpy="0 0 0" xyz="0.098 0.0 -0.045000000000000005"/>
     <parent link="base_link"/>
     <child link="camera_link"/>
   </joint>
@@ -185,7 +191,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hector_sensors_description/meshes/asus_camera/asus_camera_simple.dae"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/champ_description/share/champ_description/meshes/asus_camera_simple.dae"/>
       </geometry>
     </visual>
     <!--        
@@ -199,7 +205,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://hector_sensors_description/meshes/asus_camera/asus_camera_simple.dae"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/champ_description/share/champ_description/meshes/asus_camera_simple.dae"/>
       </geometry>
     </collision>
   </link>
@@ -231,7 +237,7 @@
   <gazebo reference="camera_depth_frame">
     <sensor name="camera" type="depth">
       <update_rate>20</update_rate>
-      <camera>
+      <camera name="camera_depth_frame_camera">
         <horizontal_fov>1.0960667702524387</horizontal_fov>
         <image>
           <format>R8G8B8</format>
@@ -243,28 +249,100 @@
           <far>9</far>
         </clip>
       </camera>
-      <plugin filename="libgazebo_ros_openni_kinect.so" name="camera_camera_controller">
-        <imageTopicName>camera/rgb/image_raw</imageTopicName>
-        <cameraInfoTopicName>camera/rgb/camera_info</cameraInfoTopicName>
-        <depthImageTopicName>camera/depth/image_raw</depthImageTopicName>
-        <depthImageCameraInfoTopicName>camera/depth/camera_info</depthImageCameraInfoTopicName>
-        <pointCloudTopicName>camera/depth/points</pointCloudTopicName>
-        <frameName>camera_depth_optical_frame</frameName>
+      <!-- Set always_on only sensor, not on plugin -->
+      <always_on>1</always_on>
+      <!-- Set update_rate only sensor, not on plugin -->
+      <update_rate>30</update_rate>
+      <plugin filename="libgazebo_ros_camera.so" name="camera_camera_controller">
+        <ros>
+          <!-- <namespace>custom_ns</namespace> -->
+          <argument>custom_camera/image_raw:=camera/rgb/image_raw</argument>
+          <argument>custom_camera/image_depth:=camera/depth/image_raw</argument>
+          <argument>custom_camera/camera_info:=custom_camera/custom_info_raw</argument>
+          <argument>custom_camera/camera_info_depth:=camera/depth/camera_info</argument>
+          <argument>custom_camera/points:=camera/depth/points</argument>
+        </ros>
+        <qos>
+          <topic name="/camera/image_raw">
+            <publisher>
+              <reliability>reliable</reliability>
+              <durability>volatile</durability>
+              <history>keep_all</history>
+              <deadline>123</deadline>
+              <!-- milliseconds -->
+              <lifespan>42</lifespan>
+              <!-- milliseconds -->
+              <liveliness>manual_by_topic</liveliness>
+              <liveliness_lease_duration>1000</liveliness_lease_duration>
+              <!-- milliseconds -->
+            </publisher>
+            <subscription>
+              <reliability>reliable</reliability>
+              <durability>volatile</durability>
+              <history depth="3">keep_last</history>
+            </subscription>
+          </topic>
+          <topic name="/camera/depth/image_raw">
+            <publisher>
+              <reliability>reliable</reliability>
+              <durability>volatile</durability>
+              <history>keep_all</history>
+            </publisher>
+            <subscription>
+              <reliability>reliable</reliability>
+              <durability>volatile</durability>
+              <history depth="3">keep_last</history>
+            </subscription>
+          </topic>
+          <topic name="/camera/depth/camera_info">
+            <publisher>
+              <reliability>reliable</reliability>
+              <durability>volatile</durability>
+              <history>keep_all</history>
+              <deadline>123</deadline>
+              <!-- milliseconds -->
+              <lifespan>42</lifespan>
+              <!-- milliseconds -->
+              <liveliness>manual_by_topic</liveliness>
+              <liveliness_lease_duration>1000</liveliness_lease_duration>
+              <!-- milliseconds -->
+            </publisher>
+            <subscription>
+              <reliability>reliable</reliability>
+              <durability>volatile</durability>
+              <history depth="3">keep_last</history>
+            </subscription>
+          </topic>
+          <topic name="/camera/camera_info">
+            <publisher>
+              <reliability>reliable</reliability>
+              <durability>volatile</durability>
+              <history>keep_all</history>
+              <deadline>123</deadline>
+              <!-- milliseconds -->
+              <lifespan>42</lifespan>
+              <!-- milliseconds -->
+              <liveliness>manual_by_topic</liveliness>
+              <liveliness_lease_duration>1000</liveliness_lease_duration>
+              <!-- milliseconds -->
+            </publisher>
+            <subscription>
+              <reliability>reliable</reliability>
+              <durability>volatile</durability>
+              <history depth="3">keep_last</history>
+            </subscription>
+          </topic>
+        </qos>
+        <!-- Set camera name. If empty, defaults to sensor name (i.e. "sensor_name") -->
+        <!-- <camera_name>custom_camera</camera_name> -->
+        <!-- Set TF frame name. If empty, defaults to link name (i.e. "link_name") -->
+        <frame_name>camera_depth_optical_frame</frame_name>
+        <hack_baseline>0.07</hack_baseline>
+        <!-- No need to repeat distortion parameters or to set autoDistortion -->
+        <min_depth>0.001</min_depth>
+        <max_depth>20.0</max_depth>
       </plugin>
     </sensor>
-  </gazebo>
-  <gazebo>
-    <plugin filename="libhector_gazebo_ros_imu.so" name="imu_controller">
-      <updateRate>50.0</updateRate>
-      <bodyName>imu_link</bodyName>
-      <topicName>imu/data</topicName>
-      <accelDrift>0.005 0.005 0.005</accelDrift>
-      <accelGaussianNoise>0.005 0.005 0.005</accelGaussianNoise>
-      <rateDrift>0.005 0.005 0.005 </rateDrift>
-      <rateGaussianNoise>0.005 0.005 0.005 </rateGaussianNoise>
-      <headingDrift>0.005</headingDrift>
-      <headingGaussianNoise>0.005</headingGaussianNoise>
-    </plugin>
   </gazebo>
   <link name="imu_link">
     <inertial>
@@ -277,6 +355,27 @@
     <parent link="base_link"/>
     <child link="imu_link"/>
   </joint>
+  <gazebo reference="imu_link">
+    <sensor name="imu_controller" type="imu">
+      <always_on>true</always_on>
+      <update_rate>50</update_rate>
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="gazebo_ros_imu_sensor">
+        <ros>
+          <namespace>/imu</namespace>
+          <argument>~/out:=data</argument>
+        </ros>
+        <!-- <updateRate>50.0</updateRate>
+                        <bodyName>imu_link</bodyName>
+                        <topicName>imu/data</topicName>
+                        <accelDrift>0.005 0.005 0.005</accelDrift>
+                        <accelGaussianNoise>0.005 0.005 0.005</accelGaussianNoise>
+                        <rateDrift>0.005 0.005 0.005 </rateDrift>
+                        <rateGaussianNoise>0.005 0.005 0.005 </rateGaussianNoise>
+                        <headingDrift>0.005</headingDrift>
+                        <headingGaussianNoise>0.005</headingGaussianNoise> -->
+      </plugin>
+    </sensor>
+  </gazebo>
   <!-- <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
         <xacro:VLP-16 parent="${base_name}" name="velodyne" topic="velodyne_points" hz="10" samples="1024" gpu="false" lasers="16" max_range="100">
             <origin xyz="0 0 ${base_height / 2}" rpy="0 0 0" />
@@ -295,13 +394,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lf_hip.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lf_hip.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lf_hip.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lf_hip.stl" scale="1 1 1"/>
       </geometry>
       <material name="dyellow"/>
     </visual>
@@ -318,13 +417,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lf_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lf_lower_leg.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lf_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lf_lower_leg.stl" scale="1 1 1"/>
       </geometry>
       <material name="dyellow"/>
     </visual>
@@ -341,13 +440,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lf_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lf_lower_leg.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lf_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lf_lower_leg.stl" scale="1 1 1"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -370,13 +469,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/foot.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/foot.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/foot.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/foot.stl" scale="1 1 1"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -445,6 +544,26 @@
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
+  <ros2_control name="lf" type="system">
+    <hardware>
+      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+    <joint name="lf_hip_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="lf_upper_leg_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="lf_lower_leg_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
   <link name="lh_hip_debug_link"/>
   <link name="lh_hip_link">
     <inertial>
@@ -454,13 +573,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lh_hip.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lh_hip.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lh_hip.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lh_hip.stl" scale="1 1 1"/>
       </geometry>
       <material name="dyellow"/>
     </visual>
@@ -477,13 +596,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lh_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lh_lower_leg.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lh_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lh_lower_leg.stl" scale="1 1 1"/>
       </geometry>
       <material name="dyellow"/>
     </visual>
@@ -500,13 +619,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lh_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lh_lower_leg.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/lh_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/lh_lower_leg.stl" scale="1 1 1"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -529,13 +648,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/foot.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/foot.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/foot.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/foot.stl" scale="1 1 1"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -604,6 +723,26 @@
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
+  <ros2_control name="lh" type="system">
+    <hardware>
+      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+    <joint name="lh_hip_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="lh_upper_leg_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="lh_lower_leg_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
   <link name="rf_hip_debug_link"/>
   <link name="rf_hip_link">
     <inertial>
@@ -613,13 +752,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rf_hip.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rf_hip.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rf_hip.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rf_hip.stl" scale="1 1 1"/>
       </geometry>
       <material name="dyellow"/>
     </visual>
@@ -636,13 +775,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rf_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rf_lower_leg.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rf_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rf_lower_leg.stl" scale="1 1 1"/>
       </geometry>
       <material name="dyellow"/>
     </visual>
@@ -659,13 +798,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rf_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rf_lower_leg.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rf_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rf_lower_leg.stl" scale="1 1 1"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -688,13 +827,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/foot.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/foot.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/foot.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/foot.stl" scale="1 1 1"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -763,6 +902,26 @@
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
+  <ros2_control name="rf" type="system">
+    <hardware>
+      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+    <joint name="rf_hip_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="rf_upper_leg_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="rf_lower_leg_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
   <link name="rh_hip_debug_link"/>
   <link name="rh_hip_link">
     <inertial>
@@ -772,13 +931,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rh_hip.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rh_hip.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rh_hip.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rh_hip.stl" scale="1 1 1"/>
       </geometry>
       <material name="dyellow"/>
     </visual>
@@ -795,13 +954,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rh_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rh_lower_leg.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rh_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rh_lower_leg.stl" scale="1 1 1"/>
       </geometry>
       <material name="dyellow"/>
     </visual>
@@ -818,13 +977,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rh_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rh_lower_leg.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/rh_lower_leg.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/rh_lower_leg.stl" scale="1 1 1"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -847,13 +1006,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/foot.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/foot.stl" scale="1 1 1"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="file://$(find mini_pupper_description)/meshes/foot.stl" scale="1 1 1"/>
+        <mesh filename="file:///home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/meshes/foot.stl" scale="1 1 1"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -922,6 +1081,26 @@
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
+  <ros2_control name="rh" type="system">
+    <hardware>
+      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+    <joint name="rh_hip_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="rh_upper_leg_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="rh_lower_leg_joint">
+      <command_interface name="effort"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
   <gazebo>
     <plugin filename="libgazebo_ros_p3d.so" name="p3d_base_controller">
       <alwaysOn>true</alwaysOn>
@@ -935,9 +1114,8 @@
     </plugin>
   </gazebo>
   <gazebo>
-    <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
-      <legacyModeNS>true</legacyModeNS>
+    <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+      <parameters>/home/juan/champ2_ws/install/mini_pupper_description/share/mini_pupper_description/config/ros_control.yaml</parameters>
     </plugin>
   </gazebo>
 </robot>
-

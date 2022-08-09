@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:macro name="ld06" params="*origin parent">
-    <xacro:include filename="$(find mini-pupper_description)/urdf/laser.urdf.xacro" />
+    <xacro:include filename="$(find mini_pupper_description)/urdf/laser.urdf.xacro" />
     <xacro:laser
       parent="${parent}"
       update_rate="10"

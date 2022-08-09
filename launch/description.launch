@@ -1,6 +1,6 @@
 <launch>
     <arg name="description_name"           default="robot_description"/>
-    <arg name="description_file"           default="$(find mini-pupper_description)/urdf/mini-pupper.urdf"/>
+    <arg name="description_file"           default="$(find mini_pupper_description)/urdf/mini-pupper.urdf"/>
 
     <param name="$(arg description_name)" textfile="$(arg description_file)"/>
 
@@ -12,5 +12,5 @@
     </node>
 
     <!-- debug -->
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find mini-pupper_description)/rviz/urdf_viewer.rviz"/>
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find mini_pupper_description)/rviz/urdf_viewer.rviz"/>
 </launch>
